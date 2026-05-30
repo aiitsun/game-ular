@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game Mobile</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    text-align:center;
+    background:#111;
+    color:white;
+    margin:0;
+    padding:20px;
+}
+
+h1{
+    color:#00ff66;
+}
+
+canvas{
+    background:#222;
+    border:3px solid #00ff66;
+    max-width:95vw;
+}
+
+#score{
+    font-size:20px;
+    margin:10px;
+}
+
+.controls{
+    margin-top:20px;
+}
+
+.row{
+    display:flex;
+    justify-content:center;
+}
+
+button{
+    width:70px;
+    height:70px;
+    margin:5px;
+    font-size:28px;
+    border:none;
+    border-radius:15px;
+    background:#00ff66;
+    cursor:pointer;
+}
+
+button:active{
+    transform:scale(0.95);
+}
+
+#restart{
+    width:auto;
+    padding:12px 20px;
+    font-size:18px;
+    margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🐍 Snake Game</h1>
+
+<div id="score">
+Skor: 0 | High Score: 0
+</div>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<div class="controls">
+
+<div class="row">
+<button onclick="setDirection('UP')">⬆</button>
+</div>
+
+<div class="row">
+<button onclick="setDirection('LEFT')">⬅</button>
+<button onclick="setDirection('DOWN')">⬇</button>
+<button onclick="setDirection('RIGHT')">➡</button>
+</div>
+
+</div>
+
+<button id="restart" onclick="restartGame()">
+🔄 Restart
+</button>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const box = 20;
+const size = 20;
+
+let snake;
+let food;
+let score;
+let highScore = localStorage.getItem("highScore") || 0;
+let direction;
+let game;
+
+function init(){
+    snake = [{x:10*box,y:10*box}];
+
+    food = {
+        x: Math.floor(Math.random()*size)*box,
+        y: Math.floor(Math.random()*size)*box
+    };
+
+    score = 0;
+    direction = "RIGHT";
+}
+
+function setDirection(dir){
+
+    if(dir==="UP" && direction!=="DOWN")
+        direction="UP";
+
+    if(dir==="DOWN" && direction!=="UP")
+        direction="DOWN";
+
+    if(dir==="LEFT" && direction!=="RIGHT")
+        direction="LEFT";
+
+    if(dir==="RIGHT" && direction!=="LEFT")
+        direction="RIGHT";
+}
+
+document.addEventListener("keydown", e=>{
+
+    if(e.key==="ArrowUp") setDirection("UP");
+    if(e.key==="ArrowDown") setDirection("DOWN");
+    if(e.key==="ArrowLeft") setDirection("LEFT");
+    if(e.key==="ArrowRight") setDirection("RIGHT");
+
+});
+
+function collision(head,array){
+    for(let i=0;i<array.length;i++){
+        if(head.x===array[i].x && head.y===array[i].y){
+            return true;
+        }
+    }
+    return false;
+}
+
+function draw(){
+
+    ctx.fillStyle="#222";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    snake.forEach((part,index)=>{
+        ctx.fillStyle=index===0?"#00ff66":"green";
+        ctx.fillRect(part.x,part.y,box,box);
+    });
+
+    ctx.fillStyle="red";
+    ctx.fillRect(food.x,food.y,box,box);
+
+    let headX = snake[0].x;
+    let headY = snake[0].y;
+
+    if(direction==="UP") headY-=box;
+    if(direction==="DOWN") headY+=box;
+    if(direction==="LEFT") headX-=box;
+    if(direction==="RIGHT") headX+=box;
+
+    if(headX===food.x && headY===food.y){
+
+        score++;
+
+        if(score>highScore){
+            highScore=score;
+            localStorage.setItem("highScore",highScore);
+        }
+
+        food={
+            x:Math.floor(Math.random()*size)*box,
+            y:Math.floor(Math.random()*size)*box
+        };
+
+    }else{
+        snake.pop();
+    }
+
+    let newHead={
+        x:headX,
+        y:headY
+    };
+
+    if(
+        headX<0 ||
+        headY<0 ||
+        headX>=canvas.width ||
+        headY>=canvas.height ||
+        collision(newHead,snake)
+    ){
+        clearInterval(game);
+
+        setTimeout(()=>{
+            alert("Game Over!\nSkor: "+score);
+        },100);
+
+        return;
+    }
+
+    snake.unshift(newHead);
+
+    document.getElementById("score").innerHTML =
+    "Skor: "+score+" | High Score: "+highScore;
+}
+
+function restartGame(){
+    clearInterval(game);
+    init();
+    game=setInterval(draw,120);
+}
+
+init();
+game=setInterval(draw,120);
+</script>
+
+</body>
+</html>
